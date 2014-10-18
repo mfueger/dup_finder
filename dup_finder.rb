@@ -8,7 +8,7 @@ class DupFinder
   attr_accessor :dirs
   attr_reader :file_sizes, :dups
 
-  def initialize(options)
+  def initialize(options = {})
     @dirs = []
     @file_sizes = {}
     @dups = []
@@ -23,7 +23,7 @@ class DupFinder
   end
 
   def summary
-    puts "#{@file_sizes.length} files processed"
+    puts "\n#{@file_sizes.length} files processed"
     puts "#{@dups.count} dups found"
   end
 
@@ -38,10 +38,11 @@ class DupFinder
       next if File.symlink?(f)
 
       # custom exclude
-      next if @options[:exclude] && (f =~ /#{Regexp.quote(@options[:exclude])}/)
+      next if @options[:exclude] && (f =~ /#{@options[:exclude]}/)
 
       if File.file?(f)
         size = File.size(f)
+
         next if (size == 0) && !@options[:empty]
         @file_sizes[size] ||= []
         @file_sizes[size] << f
@@ -64,7 +65,7 @@ class DupFinder
     puts "# Kept: #{original}" if @options[:verbose] && (@options[:keep] != :none)
     group.each { |f| @dups << f }
   end # get_dups_from_group
-  
+
   def find_dups
     @file_sizes.reject { |size, file_ary| file_ary.length == 1 }.values.each do |group|
       digests = group.map { |f| Digest::SHA1.file(f).hexdigest }
